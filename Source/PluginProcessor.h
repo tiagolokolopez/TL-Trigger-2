@@ -48,6 +48,14 @@ public:
     int  getSlotsVersion() const noexcept { return slotsVersion.load(); }
     void auditionSlot (int slot) { engine.audition (slot); }
 
+    // Tamaño de la ventana: 80, 100 o 120 (%). Se guarda con el estado del plugin.
+    int getUiScalePercent() const
+    {
+        const int v = (int) apvts.state.getProperty ("uiScale", 100);
+        return (v == 80 || v == 100 || v == 120) ? v : 100;
+    }
+    void setUiScalePercent (int pct) { apvts.state.setProperty ("uiScale", pct, nullptr); }
+
     juce::File lastSampleDir;
 
     //==============================================================================

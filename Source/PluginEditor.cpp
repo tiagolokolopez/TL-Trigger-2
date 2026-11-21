@@ -6,6 +6,19 @@ namespace
     {
         return f.hasFileExtension ("wav;aif;aiff;flac;ogg;mp3");
     }
+
+    // Linea que se desvanece hacia los lados, para los detalles en rojo
+    void drawFadeLine (juce::Graphics& g, float cx, float y, float halfWidth, float thickness,
+                       juce::Colour colour)
+    {
+        juce::ColourGradient left (juce::Colours::transparentBlack, cx - halfWidth, y, colour, cx, y, false);
+        g.setGradientFill (left);
+        g.fillRect (cx - halfWidth, y, halfWidth, thickness);
+
+        juce::ColourGradient right (colour, cx, y, juce::Colours::transparentBlack, cx + halfWidth, y, false);
+        g.setGradientFill (right);
+        g.fillRect (cx, y, halfWidth, thickness);
+    }
 }
 
 //==============================================================================
@@ -51,23 +64,22 @@ void SlotRow::paint (juce::Graphics& g)
 
     g.setColour (juce::Colour (0xff111215));
     g.fillRoundedRectangle (b, 6.f);
-    g.setColour (highlight ? tl::teal : juce::Colour (0xff2b2d33));
+    g.setColour (highlight ? tl::redHi : tl::redDeep);
     g.drawRoundedRectangle (b, 6.f, highlight ? 1.8f : 1.f);
 
     tl::drawLED (g, { b.getX() + 14.f, b.getCentreY() }, 4.f, info.loaded);
 
-    g.setColour (juce::Colour (0xff8d8a80));
-    g.setFont (tl::font (11.f, true));
+    g.setColour (juce::Colour (0xff9a968b));
+    g.setFont (tl::font (13.f, false));
     g.drawText (juce::String (index + 1),
                 juce::Rectangle<int> ((int) b.getX() + 24, (int) b.getY(), 14, (int) b.getHeight()),
                 juce::Justification::centredLeft, false);
 
     juce::String text;
-    if (info.loaded)       { g.setColour (juce::Colour (0xffe9e4d6)); text = info.text; }
-    else if (info.missing) { g.setColour (juce::Colour (0xffff6a5e)); text = "missing: " + info.text; }
-    else                   { g.setColour (juce::Colour (0xff5f5d57)); text = "- empty -"; }
+    if (info.loaded)       { g.setColour (juce::Colour (0xffe9e4d6)); text = info.text; g.setFont (tl::font (13.5f, true)); }
+    else if (info.missing) { g.setColour (tl::redHi);                 text = "missing: " + info.text; g.setFont (tl::font (13.5f, true)); }
+    else                   { g.setColour (juce::Colour (0xff77746b)); text = "- empty -"; g.setFont (tl::font (14.f, false)); }
 
-    g.setFont (tl::font (12.5f));
     g.drawText (text, nameArea, juce::Justification::centredLeft, true);
 }
 
@@ -157,6 +169,21 @@ MainPanel::MainPanel (TLTriggerAudioProcessor& p)
         });
     modeAttachment->sendInitialUpdate();
 
+    // tamaño de la ventana: 80 / 100 / 120 %
+    const int percents[3] = { 80, 100, 120 };
+    for (int i = 0; i < 3; ++i)
+    {
+        auto& b = sizeButtons[(size_t) i];
+        b.setButtonText (juce::String (percents[i]) + "%");
+        b.setBounds (934 + i * 50, 14, 46, 24);
+        b.onClick = [this, i, percents]
+        {
+            setSizeSelection (percents[i]);
+            if (onSizeChange) onSizeChange (percents[i]);
+        };
+        addAndMakeVisible (b);
+    }
+
     // fase
     phaseButton.setBounds (958, 540, 130, 30);
     addAndMakeVisible (phaseButton);
@@ -175,6 +202,13 @@ MainPanel::~MainPanel()
 {
     stopTimer();
     setLookAndFeel (nullptr);
+}
+
+void MainPanel::setSizeSelection (int percent)
+{
+    const int percents[3] = { 80, 100, 120 };
+    for (int i = 0; i < 3; ++i)
+        sizeButtons[(size_t) i].setToggleState (percents[i] == percent, juce::dontSendNotification);
 }
 
 void MainPanel::setupKnob (Knob& k, const juce::String& paramId, const juce::String& name,
@@ -223,8 +257,10 @@ juce::Image MainPanel::makeBackground() const
 
     g.setColour (juce::Colour (0xff000000));
     g.drawRect (0, 0, designW, designH, 2);
-    g.setColour (juce::Colours::white.withAlpha (0.06f));
-    g.drawHorizontalLine (2, 2.f, (float) designW - 2.f);
+
+    // filetes rojos arriba y abajo
+    drawFadeLine (g, (float) designW * 0.5f, 3.f, (float) designW * 0.5f, 1.5f, tl::redMid);
+    drawFadeLine (g, (float) designW * 0.5f, (float) designH - 5.f, (float) designW * 0.5f, 1.5f, tl::redDark);
 
     return img;
 }
@@ -233,42 +269,55 @@ void MainPanel::paint (juce::Graphics& g)
 {
     g.drawImageAt (background, 0, 0);
 
-    // titulo
-    const auto title = tl::font (32.f, true).withExtraKerningFactor (0.2f);
-    g.setFont (title);
-    g.setColour (juce::Colours::black.withAlpha (0.8f));
-    g.drawText ("TL TRIGGER", juce::Rectangle<int> (301, 13, 500, 40), juce::Justification::centred, false);
-    g.setColour (juce::Colour (0xffe8e3d4));
-    g.drawText ("TL TRIGGER", juce::Rectangle<int> (300, 12, 500, 40), juce::Justification::centred, false);
+    // titulo en Acidic, con sombra y resplandor rojo
+    const juce::Rectangle<int> titleArea (300, 4, 500, 48);
+    g.setFont (tl::titleFont (46.f));
+    g.setColour (tl::redDark.withAlpha (0.6f));
+    g.drawText ("TL TRIGGER", titleArea.translated (0, 3), juce::Justification::centred, false);
+    g.setColour (juce::Colours::black.withAlpha (0.85f));
+    g.drawText ("TL TRIGGER", titleArea.translated (2, 2), juce::Justification::centred, false);
+    g.setColour (tl::cream);
+    g.drawText ("TL TRIGGER", titleArea, juce::Justification::centred, false);
+
+    drawFadeLine (g, 550.f, 54.f, 200.f, 1.5f, tl::red);
+
+    // selector de tamaño
+    g.setFont (tl::font (12.5f, true).withExtraKerningFactor (0.05f));
+    g.setColour (juce::Colour (0xff9a968b));
+    g.drawText ("WINDOW SIZE", juce::Rectangle<int> (806, 14, 122, 24), juce::Justification::centredRight, false);
 
     // nombres de las perillas
-    g.setFont (tl::font (12.5f, true).withExtraKerningFactor (0.08f));
+    g.setFont (tl::font (14.f, true).withExtraKerningFactor (0.05f));
     g.setColour (juce::Colour (0xffbdb8aa));
     for (const auto& k : knobs)
-        g.drawText (k.name, k.rect.getX(), k.rect.getY() - 18, k.rect.getWidth(), 16,
+        g.drawText (k.name, k.rect.getX(), k.rect.getY() - 21, k.rect.getWidth(), 18,
                     juce::Justification::centred, false);
 
     // panel de samples
     const juce::Rectangle<float> panel (300.f, 252.f, 500.f, 224.f);
     g.setColour (juce::Colour (0xff0a0a0c));
     g.fillRoundedRectangle (panel, 8.f);
-    g.setColour (juce::Colour (0xff2a2c31));
+    g.setColour (tl::redDark.withAlpha (0.7f));
     g.drawRoundedRectangle (panel, 8.f, 1.2f);
 
-    g.setFont (tl::font (11.f, true).withExtraKerningFactor (0.1f));
-    g.setColour (juce::Colour (0xff8d8a80));
+    g.setFont (tl::font (13.f, false));
+    g.setColour (juce::Colour (0xffa29e92));
     g.drawText ("SAMPLES  -  DROP AUDIO FILES HERE  -  CLICK A NAME TO PREVIEW",
-                juce::Rectangle<int> (310, 256, 480, 18), juce::Justification::centred, false);
+                juce::Rectangle<int> (310, 255, 480, 20), juce::Justification::centred, false);
 
+    g.setFont (tl::font (13.f, true).withExtraKerningFactor (0.06f));
     g.setColour (juce::Colour (0xffbdb8aa));
-    g.setFont (tl::font (11.f, true).withExtraKerningFactor (0.12f));
-    g.drawText ("TRIGGER MODE", juce::Rectangle<int> (300, 482, 500, 16), juce::Justification::centred, false);
+    g.drawText ("TRIGGER MODE", juce::Rectangle<int> (300, 481, 500, 18), juce::Justification::centred, false);
 
-    // rotulos inferiores
-    g.setFont (tl::font (20.f, true).withExtraKerningFactor (0.15f));
-    g.setColour (juce::Colour (0xffd9d4c6));
-    g.drawText ("DRUM TRIGGER", juce::Rectangle<int> (310, 566, 200, 34), juce::Justification::centredLeft, false);
-    g.drawText ("SAMPLE REPLACER", juce::Rectangle<int> (590, 566, 205, 34), juce::Justification::centredRight, false);
+    // rotulos inferiores en Acidic, tono rojo
+    g.setFont (tl::titleFont (21.f));
+    const juce::Rectangle<int> leftText (310, 568, 200, 30), rightText (596, 568, 199, 30);
+    g.setColour (juce::Colours::black.withAlpha (0.8f));
+    g.drawText ("DRUM TRIGGER",    leftText.translated (1, 2),  juce::Justification::centredLeft,  false);
+    g.drawText ("SAMPLE REPLACER", rightText.translated (1, 2), juce::Justification::centredRight, false);
+    g.setColour (tl::redMid);
+    g.drawText ("DRUM TRIGGER",    leftText,  juce::Justification::centredLeft,  false);
+    g.drawText ("SAMPLE REPLACER", rightText, juce::Justification::centredRight, false);
 }
 
 //==============================================================================
@@ -351,14 +400,28 @@ void MainPanel::timerCallback()
 // Editor
 //==============================================================================
 TLTriggerAudioProcessorEditor::TLTriggerAudioProcessorEditor (TLTriggerAudioProcessor& p)
-    : AudioProcessorEditor (&p), panel (p)
+    : AudioProcessorEditor (&p), audioProcessor (p), panel (p)
 {
     addAndMakeVisible (panel);
+    setResizable (false, false);
 
-    setResizable (true, true);
-    setResizeLimits (825, 480, 1650, 960);
-    getConstrainer()->setFixedAspectRatio ((double) MainPanel::designW / (double) MainPanel::designH);
-    setSize (MainPanel::designW, MainPanel::designH);
+    const int percent = audioProcessor.getUiScalePercent();
+    panel.setSizeSelection (percent);
+    panel.onSizeChange = [this] (int newPercent)
+    {
+        audioProcessor.setUiScalePercent (newPercent);
+        applyScale (newPercent);
+    };
+
+    applyScale (percent);
+}
+
+// 120 % = tamaño de diseño (1100 x 640); 100 % y 80 % son proporcionales
+void TLTriggerAudioProcessorEditor::applyScale (int percent)
+{
+    const float s = (float) percent / 120.f;
+    setSize (juce::roundToInt ((float) MainPanel::designW * s),
+             juce::roundToInt ((float) MainPanel::designH * s));
 }
 
 void TLTriggerAudioProcessorEditor::resized()

@@ -32,6 +32,8 @@ public:
                                   juce::Colour (0xff0a0a0c), b.getRight(), b.getBottom(), false);
         g.setGradientFill (bez);
         g.drawRoundedRectangle (b.reduced (1.f), 16.f, 2.f);
+        g.setColour (tl::redDeep.withAlpha (0.9f));
+        g.drawRoundedRectangle (b.reduced (5.f), 12.f, 1.f);
 
         // cara
         auto f = b.reduced (12.f);
@@ -70,7 +72,7 @@ public:
 
         // marcas y numeros
         const float vals[] = { -20.f, -10.f, -7.f, -5.f, -3.f, -2.f, -1.f, 0.f, 1.f, 2.f, 3.f };
-        g.setFont (tl::font (11.f, true));
+        g.setFont (tl::font (12.f, true));
         for (float v : vals)
         {
             const float a = angleFor (vuToPos (v));
@@ -79,30 +81,32 @@ public:
             g.drawLine (juce::Line<float> (pointAt (r, a), pointAt (r - 7.f, a)), 1.4f);
 
             const juce::String txt = v > 0.f ? "+" + juce::String ((int) v) : juce::String ((int) v);
-            g.drawText (txt, juce::Rectangle<float> (30.f, 12.f).withCentre (pointAt (r + 13.f, a)).toNearestInt(),
+            g.drawText (txt, juce::Rectangle<float> (32.f, 14.f).withCentre (pointAt (r + 13.f, a)).toNearestInt(),
                         juce::Justification::centred, false);
         }
 
         g.setColour (ink.withAlpha (0.85f));
-        g.setFont (tl::font (12.f, true));
-        g.drawText ("VU", juce::Rectangle<int> ((int) f.getX() + 12, (int) f.getY() + 8, 40, 14),
+        g.setFont (tl::font (13.f, true));
+        g.drawText ("VU", juce::Rectangle<int> ((int) f.getX() + 12, (int) f.getY() + 8, 40, 16),
                     juce::Justification::centredLeft, false);
 
-        // aguja
+        // aguja (rojo oscuro)
         const float a = angleFor (juce::jlimit (0.f, 1.06f, needle));
         const auto tip = pointAt (r, a);
         g.setColour (juce::Colours::black.withAlpha (0.25f));
         g.drawLine (pivot.x + 3.f, pivot.y + 1.f, tip.x + 3.f, tip.y + 1.f, 2.2f);
-        g.setColour (juce::Colour (0xff111111));
-        g.drawLine (pivot.x, pivot.y, tip.x, tip.y, 1.8f);
+        g.setColour (tl::redDark);
+        g.drawLine (pivot.x, pivot.y, tip.x, tip.y, 1.9f);
 
         // placa inferior
         juce::Rectangle<float> plate (f.getCentreX() - f.getWidth() * 0.30f, f.getBottom() - 38.f,
                                       f.getWidth() * 0.60f, 60.f);
         g.setColour (juce::Colour (0xff101113));
         g.fillRoundedRectangle (plate, 22.f);
+        g.setColour (tl::redMid.withAlpha (0.8f));
+        g.drawRoundedRectangle (plate.reduced (0.5f), 22.f, 1.f);
         g.setColour (juce::Colour (0xfff0e6c8));
-        g.setFont (tl::font (12.f, true).withExtraKerningFactor (0.12f));
+        g.setFont (tl::font (13.f, true).withExtraKerningFactor (0.08f));
         g.drawText (label, plate.withHeight (30.f).translated (0.f, 6.f).toNearestInt(),
                     juce::Justification::centred, false);
 
@@ -130,7 +134,7 @@ private:
 };
 
 //==============================================================================
-// Lampara verde que destella cada vez que se dispara un sample.
+// Lampara roja que destella cada vez que se dispara un sample.
 class JewelLamp : public juce::Component
 {
 public:
@@ -154,7 +158,7 @@ public:
 
         if (intensity > 0.f)
         {
-            juce::ColourGradient glow (juce::Colour (0xff35ff5a).withAlpha (0.55f * intensity), c.x, c.y,
+            juce::ColourGradient glow (tl::redHi.withAlpha (0.55f * intensity), c.x, c.y,
                                        juce::Colours::transparentBlack, c.x + R, c.y, true);
             g.setGradientFill (glow);
             g.fillEllipse (b);
@@ -166,9 +170,11 @@ public:
                                    juce::Colour (0xff121315), c.x + r1, c.y + r1, false);
         g.setGradientFill (ring);
         g.fillEllipse (c.x - r1 - 6.f, c.y - r1 - 6.f, (r1 + 6.f) * 2.f, (r1 + 6.f) * 2.f);
+        g.setColour (tl::redDark.withAlpha (0.8f));
+        g.drawEllipse (c.x - r1 - 6.f, c.y - r1 - 6.f, (r1 + 6.f) * 2.f, (r1 + 6.f) * 2.f, 1.2f);
 
-        const auto unlitA = juce::Colour (0xff1c6b2a), unlitB = juce::Colour (0xff03120a);
-        const auto litA   = juce::Colour (0xffa6ffab), litB   = juce::Colour (0xff12801f);
+        const auto unlitA = juce::Colour (0xff5a1013), unlitB = juce::Colour (0xff1a0405);
+        const auto litA   = juce::Colour (0xffffb3a8), litB   = juce::Colour (0xffc0141b);
         juce::ColourGradient lens (unlitA.interpolatedWith (litA, intensity), c.x - r1 * 0.3f, c.y - r1 * 0.4f,
                                    unlitB.interpolatedWith (litB, intensity), c.x + r1, c.y + r1, true);
         g.setGradientFill (lens);

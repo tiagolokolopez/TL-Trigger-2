@@ -30,6 +30,12 @@ juce_add_plugin(TLTrigger
 
 juce_generate_juce_header(TLTrigger)
 
+# Fuentes incrustadas en el plugin (Acidic para los titulos, Nexa para el resto)
+juce_add_binary_data(TLTriggerFonts SOURCES
+    Resources/Fonts/acidic.ttf
+    Resources/Fonts/nexa_extralight.ttf
+    Resources/Fonts/nexa_heavy.ttf)
+
 target_sources(TLTrigger PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp)
@@ -41,6 +47,7 @@ target_compile_definitions(TLTrigger PUBLIC
 
 target_link_libraries(TLTrigger
     PRIVATE
+        TLTriggerFonts
         juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags

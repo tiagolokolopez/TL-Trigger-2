@@ -47,6 +47,10 @@ public:
 
     void paint (juce::Graphics&) override;
 
+    // El editor se entera cuando el usuario elige 80 / 100 / 120 %
+    std::function<void (int)> onSizeChange;
+    void setSizeSelection (int percent);
+
     bool isInterestedInFileDrag (const juce::StringArray& files) override;
     void fileDragMove (const juce::StringArray& files, int x, int y) override;
     void fileDragExit (const juce::StringArray& files) override;
@@ -70,6 +74,7 @@ private:
     void highlightSlot (int idx);
     void timerCallback() override;
 
+    juce::SharedResourcePointer<tl::FontHolder> fonts;   // debe crearse antes que el resto
     TLTriggerAudioProcessor& processor;
     TLLookAndFeel lnf;
     juce::Image background;
@@ -81,6 +86,8 @@ private:
 
     std::array<juce::TextButton, 3> modeButtons;
     std::unique_ptr<juce::ParameterAttachment> modeAttachment;
+
+    std::array<juce::TextButton, 3> sizeButtons;
 
     juce::ToggleButton phaseButton { "INVERT PHASE" };
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> phaseAttachment;
@@ -101,6 +108,9 @@ public:
     void resized() override;
 
 private:
+    void applyScale (int percent);
+
+    TLTriggerAudioProcessor& audioProcessor;
     MainPanel panel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TLTriggerAudioProcessorEditor)

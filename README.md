@@ -18,7 +18,18 @@ El plugin analiza la señal que entra por la pista del mixer. Cuando un golpe su
 | INVERT PHASE | Invierte la polaridad de los samples |
 | TRIGGER MODE | **Velocity**: los samples cargados se reparten por rangos de fuerza (suave → fuerte). **Round Robin**: van rotando. **Layer**: suenan todos a la vez |
 
-Hasta 8 samples (WAV, AIFF, FLAC, OGG, MP3; máximo 15 s cada uno). Arrastra archivos sobre la lista o usa el botón LOAD. Haz clic en el nombre de un sample para escucharlo. La ventana se puede redimensionar.
+Hasta 8 samples (WAV, AIFF, FLAC, OGG, MP3; máximo 15 s cada uno). Arrastra archivos sobre la lista o usa el botón LOAD. Haz clic en el nombre de un sample para escucharlo.
+
+**Tamaño de la ventana:** arriba a la derecha hay tres botones, 80 %, 100 % (estándar) y 120 % (máximo). La elección se guarda con el proyecto de FL Studio.
+
+## Fuentes
+
+Las fuentes están incrustadas en el plugin (carpeta `Resources/Fonts`):
+
+- **Acidic**: solo "TL TRIGGER", "DRUM TRIGGER" y "SAMPLE REPLACER".
+- **Nexa Extra Light** y **Nexa Heavy**: el resto del texto.
+
+Revisa la licencia de estas fuentes antes de hacer público el repositorio o de distribuir el plugin: si no tienes licencia de redistribución, mantén el repositorio en privado.
 
 ## Compilar en GitHub (sin instalar nada)
 
